@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeLink Lite - URL Security Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔒 SafeLink Lite</h1>
+            <p>Check if your URLs are safe, suspicious, or fraudulent</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('url')">URL Safety Check</button>
+            <button class="tab-btn" onclick="showTab('company')">Company Verification</button>
+        </div>
+
+        <!-- URL Input Section -->
+        <div id="url-section" class="tab-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="Paste your URL here (e.g., https://example.com)"
+                        class="url-input"
+                    >
+                    <button onclick="checkURL()" class="check-btn" id="checkBtn">
+                        Check Safety
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Input Section -->
+        <div id="company-section" class="tab-content" style="display: none;">
+            <div class="input-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="companyInput" 
+                        placeholder="Enter company name or URL (e.g., Google, https://securden.com)"
+                        class="url-input"
+                    >
+                    <button onclick="verifyCompany()" class="check-btn" id="verifyBtn">
+                        Verify Company
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Companies Section -->
+        <div class="featured-section">
+            <h3>🏢 Featured Real Companies</h3>
+            <div class="featured-companies">
+                <div class="company-card" onclick="verifyFeaturedCompany('Google')">
+                    <div class="company-logo">🔍</div>
+                    <div class="company-info">
+                        <h4>Google LLC</h4>
+                        <p>Technology company specializing in internet services and products</p>
+                        <span class="company-tag">Technology</span>
+                    </div>
+                </div>
+                <div class="company-card" onclick="verifyFeaturedCompany('Microsoft')">
+                    <div class="company-logo">💻</div>
+                    <div class="company-info">
+                        <h4>Microsoft Corporation</h4>
+                        <p>Technology company developing software and hardware</p>
+                        <span class="company-tag">Software</span>
+                    </div>
+                </div>
+                <div class="company-card" onclick="verifyFeaturedCompany('McAfee')">
+                    <div class="company-logo">🛡️</div>
+                    <div class="company-info">
+                        <h4>McAfee Corp</h4>
+                        <p>Global cybersecurity company providing protection against viruses and malware</p>
+                        <span class="company-tag">Cybersecurity</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="results-section" style="display: none;">
+            <!-- URL Results -->
+            <div id="url-results" class="result-card">
+                <div class="status-badge" id="statusBadge">
+                    <span id="statusText">SAFE</span>
+                </div>
+                
+                <div class="result-details">
+                    <h3>URL Analysis Results</h3>
+                    <div class="detail-item">
+                        <strong>URL:</strong> <span id="checkedUrl"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Risk Level:</strong> <span id="riskLevel"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Reasons:</strong>
+                        <ul id="reasonsList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Company Results -->
+            <div id="company-results" class="result-card" style="display: none;">
+                <div class="company-layout">
+                    <!-- Left Side - Company Info -->
+                    <div class="company-left">
+                        <div class="company-header">
+                            <div class="company-avatar" id="companyAvatar">🏢</div>
+                            <div class="company-title">
+                                <h2 id="companyName">Company Name</h2>
+                                <p id="companyTagline">Company description</p>
+                            </div>
+                        </div>
+                        
+                        <div class="status-badge" id="companyStatusBadge">
+                            <span id="companyStatusText">VERIFIED</span>
+                        </div>
+                        
+                        <div id="companyRealityBadge" class="reality-badge" style="display: none;">
+                            <span id="realityStatusText"></span>
+                        </div>
+                        
+                        <div class="company-quick-info">
+                            <div class="quick-info-item">
+                                <span class="info-icon">🏭</span>
+                                <div>
+                                    <small>Industry</small>
+                                    <strong id="quickIndustry">Technology</strong>
+                                </div>
+                            </div>
+                            <div class="quick-info-item">
+                                <span class="info-icon">📍</span>
+                                <div>
+                                    <small>Location</small>
+                                    <strong id="quickLocation">Unknown</strong>
+                                </div>
+                            </div>
+                            <div class="quick-info-item">
+                                <span class="info-icon">🌐</span>
+                                <div>
+                                    <small>Website</small>
+                                    <strong id="quickWebsite">example.com</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side - Detailed Information -->
+                    <div class="company-right">
+                        <div class="result-details">
+                            <h3>Detailed Information</h3>
+                            <div id="companyDetails"></div>
+                            
+                            <div id="verificationSummary" class="verification-summary" style="display: none;">
+                                <h4>Verification Summary</h4>
+                                <div id="summaryDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Analyzing URL security...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error" class="error-message" style="display: none;">
+            <p id="errorText"></p>
+        </div>
+
+        <!-- Security Info -->
+        <div class="info-section">
+            <h3>🛡️ What We Check</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>HTTPS Encryption</strong>
+                    <p>Secure connection protocol</p>
+                </div>
+                <div class="info-item">
+                    <strong>URL Length</strong>
+                    <p>Unusually long URLs can be suspicious</p>
+                </div>
+                <div class="info-item">
+                    <strong>IP Addresses</strong>
+                    <p>Direct IP usage instead of domains</p>
+                </div>
+                <div class="info-item">
+                    <strong>Suspicious Keywords</strong>
+                    <p>Common phishing terms</p>
+                </div>
+                <div class="info-item">
+                    <strong>URL Shorteners</strong>
+                    <p>Shortened links that hide destinations</p>
+                </div>
+                <div class="info-item">
+                    <strong>Domain Structure</strong>
+                    <p>Multiple subdomains analysis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.getElementById('url-section').style.display = 'none';
+            document.getElementById('company-section').style.display = 'none';
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-section').style.display = 'block';
+            event.target.classList.add('active');
+            
+            // Hide results
+            hideElements(['results', 'error']);
+        }
+
+        async function checkURL() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            // Hide previous results and errors
+            hideElements(['results', 'error']);
+            
+            // Validate input
+            if (!url) {
+                showError('Please enter a URL to check');
+                return;
+            }
+            
+            // Show loading
+            showElement('loading');
+            
+            try {
+                // Make API request
+                const response = await fetch('/check-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                hideElement('loading');
+                
+                if (response.ok) {
+                    displayURLResults(data);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+                
+            } catch (error) {
+                hideElement('loading');
+                showError('Network error. Please try again.');
+            }
+        }
+        
+        async function verifyCompany() {
+            const companyInput = document.getElementById('companyInput');
+            const companyName = companyInput.value.trim();
+            
+            // Hide previous results and errors
+            hideElements(['results', 'error']);
+            
+            // Validate input
+            if (!companyName) {
+                showError('Please enter a company name to verify');
+                return;
+            }
+            
+            // Show loading
+            showElement('loading');
+            
+            try {
+                console.log('Verifying company:', companyName); // Debug log
+                console.log('Request body:', JSON.stringify({ company_name: companyName })); // Debug log
+                
+                // Make API request
+                const response = await fetch('/verify-company', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ company_name: companyName })
+                });
+                
+                console.log('Response status:', response.status); // Debug log
+                console.log('Response headers:', response.headers); // Debug log
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Response data:', data); // Debug log
+                
+                // Hide loading
+                hideElement('loading');
+                
+                if (data && !data.error) {
+                    displayCompanyResults(data);
+                } else {
+                    showError(data.error || 'Invalid response from server');
+                }
+                
+            } catch (error) {
+                console.error('Full error details:', error); // Debug log
+                hideElement('loading');
+                showError(`Network error: ${error.message}. Please try again.`);
+            }
+        }
+        
+        function displayURLResults(data) {
+            // Hide company results, show URL results
+            document.getElementById('company-results').style.display = 'none';
+            document.getElementById('url-results').style.display = 'block';
+            
+            // Update status badge
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = data.status;
+            statusBadge.className = `status-badge ${data.status.toLowerCase()}`;
+            
+            // Update details
+            document.getElementById('checkedUrl').textContent = data.url;
+            document.getElementById('riskLevel').textContent = data.risk_level;
+            
+            // Update reasons list
+            const reasonsList = document.getElementById('reasonsList');
+            reasonsList.innerHTML = '';
+            
+            data.reasons.forEach(reason => {
+                const li = document.createElement('li');
+                li.textContent = reason;
+                reasonsList.appendChild(li);
+            });
+            
+            // Show results
+            showElement('results');
+        }
+        
+        function displayCompanyResults(data) {
+            // Hide URL results, show company results
+            document.getElementById('url-results').style.display = 'none';
+            document.getElementById('company-results').style.display = 'block';
+            
+            // Update main status badge
+            const statusBadge = document.getElementById('companyStatusBadge');
+            const statusText = document.getElementById('companyStatusText');
+            
+            // Update reality badge (REAL/FAKE)
+            const realityBadge = document.getElementById('companyRealityBadge');
+            const realityStatusText = document.getElementById('realityStatusText');
+            
+            if (data.verified && data.is_real) {
+                statusText.textContent = 'VERIFIED';
+                statusBadge.className = 'status-badge safe';
+                
+                realityStatusText.textContent = 'REAL COMPANY';
+                realityBadge.className = 'reality-badge real';
+                realityBadge.style.display = 'block';
+            } else {
+                statusText.textContent = 'NOT VERIFIED';
+                statusBadge.className = 'status-badge fraud';
+                
+                realityStatusText.textContent = 'FAKE/UNKNOWN';
+                realityBadge.className = 'reality-badge fake';
+                realityBadge.style.display = 'block';
+            }
+            
+            // Update left side company info
+            document.getElementById('companyName').textContent = data.company_name || 'Unknown Company';
+            document.getElementById('companyTagline').textContent = data.description || 'Company information not available';
+            document.getElementById('quickIndustry').textContent = data.industry || 'Unknown';
+            document.getElementById('quickLocation').textContent = data.location || 'Unknown';
+            document.getElementById('quickWebsite').textContent = data.domain || data.url || 'Unknown';
+            
+            // Set company avatar based on industry
+            const avatar = document.getElementById('companyAvatar');
+            if (data.industry) {
+                const industryIcons = {
+                    'Technology': '💻',
+                    'Cybersecurity': '🔐',
+                    'Finance': '💰',
+                    'Healthcare': '🏥',
+                    'E-commerce': '🛒',
+                    'Software': '⚙️'
+                };
+                avatar.textContent = industryIcons[data.industry] || '🏢';
+            }
+            
+            // Update company details on the right
+            const detailsDiv = document.getElementById('companyDetails');
+            detailsDiv.innerHTML = '';
+            
+            if (data.verified && data.is_real) {
+                // Show only essential details
+                const essentialDetails = [];
+                
+                if (data.founded_year) {
+                    essentialDetails.push({ label: 'Founded Year', value: data.founded_year });
+                }
+                
+                if (data.employee_count) {
+                    essentialDetails.push({ label: 'Employee Count', value: data.employee_count });
+                }
+                
+                if (data.verification_confidence || data.confidence) {
+                    essentialDetails.push({ label: 'Verification Confidence', value: data.verification_confidence || data.confidence });
+                }
+                
+                // Add website-specific details only if available
+                if (data.url && data.url !== data.domain) {
+                    essentialDetails.push({ label: 'Website URL', value: data.url });
+                }
+                
+                if (data.website_title) {
+                    essentialDetails.push({ label: 'Website Title', value: data.website_title });
+                }
+                
+                if (data.email) {
+                    essentialDetails.push({ label: 'Email', value: data.email });
+                }
+                
+                if (data.phone) {
+                    essentialDetails.push({ label: 'Phone', value: data.phone });
+                }
+                
+                essentialDetails.forEach(detail => {
+                    const div = document.createElement('div');
+                    div.className = 'detail-item';
+                    div.innerHTML = `<strong>${detail.label}:</strong> ${detail.value}`;
+                    detailsDiv.appendChild(div);
+                });
+                
+                // Show verification summary
+                if (data.verification_summary || data.sources_checked) {
+                    const summaryDiv = document.getElementById('verificationSummary');
+                    const summaryDetails = document.getElementById('summaryDetails');
+                    summaryDetails.innerHTML = '';
+                    
+                    // Show verification summary text
+                    if (data.verification_summary) {
+                        const summaryText = document.createElement('div');
+                        summaryText.className = 'detail-item';
+                        summaryText.innerHTML = `<strong>Summary:</strong> ${data.verification_summary}`;
+                        summaryDetails.appendChild(summaryText);
+                    }
+                    
+                    // Show sources checked
+                    if (data.sources && Array.isArray(data.sources)) {
+                        const sourcesText = document.createElement('div');
+                        sourcesText.className = 'detail-item';
+                        sourcesText.innerHTML = `<strong>Sources Checked:</strong> ${data.sources.join(', ')}`;
+                        summaryDetails.appendChild(sourcesText);
+                    }
+                    
+                    // Show number of sources checked
+                    if (data.sources_checked && typeof data.sources_checked === 'number') {
+                        const countText = document.createElement('div');
+                        countText.className = 'detail-item';
+                        countText.innerHTML = `<strong>Total Sources Checked:</strong> ${data.sources_checked}`;
+                        summaryDetails.appendChild(countText);
+                    }
+                    
+                    summaryDiv.style.display = 'block';
+                }
+            } else {
+                // Show error details for fake/unknown companies
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'detail-item error-detail';
+                errorDiv.innerHTML = `<strong>Verification Failed:</strong> ${data.error || 'Company could not be verified'}`;
+                detailsDiv.appendChild(errorDiv);
+            }
+            
+            showElement('results');
+        }
+        
+        // Function to verify featured companies
+        function verifyFeaturedCompany(companyName) {
+            // Switch to company tab
+            document.getElementById('url-section').style.display = 'none';
+            document.getElementById('company-section').style.display = 'block';
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to company tab
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            
+            // Set the company name and verify
+            document.getElementById('companyInput').value = companyName;
+            verifyCompany();
+        }
+        
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            showElement('error');
+        }
+        
+        function showElement(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+        
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        
+        function hideElements(ids) {
+            ids.forEach(id => hideElement(id));
+        }
+        
+        // Allow Enter key to trigger checks
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkURL();
+            }
+        });
+        
+        document.getElementById('companyInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyCompany();
+            }
+        });
+    </script>
+</body>
+</html>
