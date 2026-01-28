@@ -343,17 +343,10 @@ class CompanyVerifier:
             if meta_desc and meta_desc.get('content'):
                 company_info['description'] = meta_desc.get('content').strip()
             
-            # Extract meta keywords for industry hints
-            meta_keywords = soup.find('meta', attrs={'name': 'keywords'})
-            if meta_keywords and meta_keywords.get('content'):
-                keywords = meta_keywords.get('content').lower()
-                company_info['industry'] = self._extract_industry_from_keywords(keywords)
-            
             # Look for company name in common elements
             name_selectors = [
                 'h1', '.company-name', '.brand', '.logo-text',
-                '[class*="company"]', '[class*="brand"]', '.navbar-brand',
-                '.site-title', '.header-logo'
+                '[class*="company"]', '[class*="brand"]'
             ]
             
             for selector in name_selectors:
@@ -364,161 +357,16 @@ class CompanyVerifier:
                         company_info['extracted_name'] = potential_name
                         break
             
-            # Look for about us section
-            about_section = soup.find('section', {'id': 'about'}) or \
-                           soup.find('div', {'class': 'about'}) or \
-                           soup.find('h2', string=re.compile(r'about', re.I)) or \
-                           soup.find('div', {'class': re.compile(r'about', re.I)})
-            
-            if about_section:
-                # Get text content from about section
-                about_text = about_section.get_text().strip()[:500]  # Limit length
-                company_info['about_text'] = about_text
-                
-                # Extract location from about text
-                location = self._extract_location_from_text(about_text)
-                if location:
-                    company_info['location'] = location
-                
-                
-                # Extract location from footer
-                if not company_info.get('location'):
-                    location = self._extract_location_from_text(footer_text)
-                    if location:
-                        company_info['location'] = location
-                
-                # Extract founding year from copyright
-                if not company_info.get('founded_year'):
-                    year_match = re.search(r'(\d{4})', footer_text)
-                    if year_match:
-                        year = int(year_match.group(1))
-                        if 1900 <= year <= 2026:
-                            company_info['founded_year'] = year
-            
             return company_info if len(company_info) > 3 else None
             
         except Exception as e:
             print(f"Website content analysis failed: {e}")
             return None
 
-    def _extract_industry_from_keywords(self, keywords: str) -> str:
-        """Extract industry from meta keywords"""
-        industry_keywords = {
-            'technology': ['software', 'technology', 'tech', 'it', 'programming', 'development', 'saas'],
-            'healthcare': ['health', 'medical', 'healthcare', 'pharmaceutical', 'medicine'],
-            'finance': ['finance', 'banking', 'financial', 'investment', 'insurance', 'fintech'],
-            'education': ['education', 'learning', 'training', 'school', 'university', 'courses'],
-            'ecommerce': ['ecommerce', 'e-commerce', 'retail', 'shopping', 'store', 'marketplace'],
-            'marketing': ['marketing', 'advertising', 'digital marketing', 'seo', 'social media'],
-            'consulting': ['consulting', 'consultancy', 'advisory', 'solutions'],
-            'manufacturing': ['manufacturing', 'production', 'industrial', 'factory'],
-            'real estate': ['real estate', 'property', 'housing', 'construction'],
-            'cybersecurity': ['cybersecurity', 'security', 'information security', 'cyber security'],
-            'automotive': ['automotive', 'car', 'vehicle', 'automobile'],
-            'food': ['food', 'restaurant', 'catering', 'food service'],
-            'travel': ['travel', 'tourism', 'hospitality', 'hotel']
-        }
-        
-        for industry, keywords_list in industry_keywords.items():
-            if any(keyword in keywords for keyword in keywords_list):
-                return industry.title()
-        
-        return 'Technology'  # Default fallback
-
-    def _detect_industry_from_content(self, content: str) -> str:
-        """Detect industry from website content"""
-        industry_patterns = {
-            'Technology': ['software', 'app', 'application', 'platform', 'digital', 'cloud', 'api', 'data'],
-            'Healthcare': ['patient', 'doctor', 'medical', 'health', 'treatment', 'clinical'],
-            'Finance': ['bank', 'payment', 'loan', 'credit', 'investment', 'portfolio', 'trading'],
-            'Education': ['student', 'course', 'learning', 'teacher', 'curriculum', 'training'],
-            'E-commerce': ['product', 'cart', 'checkout', 'shipping', 'order', 'buy', 'shop'],
-            'Marketing': ['campaign', 'brand', 'audience', 'conversion', 'traffic', 'leads'],
-            'Consulting': ['consulting', 'strategy', 'solutions', 'expertise', 'advisory'],
-            'Cybersecurity': ['security', 'cyber', 'threat', 'protection', 'vulnerability', 'risk'],
-            'Real Estate': ['property', 'real estate', 'housing', 'rental', 'mortgage'],
-            'Manufacturing': ['production', 'factory', 'industrial', 'machinery', 'equipment']
-        }
-        
-        industry_scores = {}
-        for industry, patterns in industry_patterns.items():
-            score = sum(1 for pattern in patterns if pattern in content)
-            if score > 0:
-                industry_scores[industry] = score
-        
-        if industry_scores:
-            return max(industry_scores, key=industry_scores.get)
-        
-        return 'Technology'  # Default fallback
-
-    def _extract_location_from_text(self, text: str) -> Optional[str]:
-        """Extract location from text"""
-        # Common city patterns
-        cities = [
-            'new york', 'los angeles', 'chicago', 'houston', 'phoenix', 'philadelphia',
-            'san antonio', 'san diego', 'dallas', 'san jose', 'austin', 'jacksonville',
-            'boston', 'seattle', 'denver', 'washington dc', 'nashville', 'oklahoma city',
-            'london', 'paris', 'tokyo', 'singapore', 'dubai', 'sydney', 'toronto',
-            'bangalore', 'mumbai', 'delhi', 'hyderabad', 'chennai', 'kolkata'
-        ]
-        
-        # US states
-        states = [
-            'california', 'texas', 'florida', 'new york', 'pennsylvania', 'illinois',
-            'ohio', 'georgia', 'north carolina', 'michigan', 'new jersey', 'virginia'
-        ]
-        
-        # Countries
-        countries = [
-            'united states', 'usa', 'canada', 'united kingdom', 'uk', 'germany',
-            'france', 'japan', 'china', 'india', 'australia', 'singapore'
-        ]
-        
-        text_lower = text.lower()
-        
-        # Check for cities
-        for city in cities:
-            if city in text_lower:
-                return city.title()
-        
-        # Check for states
-        for state in states:
-            if state in text_lower:
-                return state.title()
-        
-        # Check for countries
-        for country in countries:
-            if country in text_lower:
-                return country.title()
-        
-        return None
-
-    def _extract_founded_year_from_text(self, text: str) -> Optional[int]:
-        """Extract founding year from text"""
-        # Look for patterns like "founded in 2010", "since 2010", "established 2010"
-        patterns = [
-            r'founded\s+in\s+(\d{4})',
-            r'since\s+(\d{4})',
-            r'established\s+(\d{4})',
-            r'started\s+in\s+(\d{4})',
-            r'(\d{4})\s*-\s*present',
-            r'from\s+(\d{4})'
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, text.lower())
-            if match:
-                year = int(match.group(1))
-                if 1900 <= year <= 2026:
-                    return year
-        
-        return None
-
     def _extract_contact_info(self, soup) -> Dict:
         """Extract contact information from website"""
         contact_info = {}
         
-        # ... (rest of the code remains the same)
         # Look for email
         email_pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
         text_content = soup.get_text()
@@ -681,57 +529,42 @@ class CompanyVerifier:
                 'industry': 'Technology',
                 'location': 'Mountain View, California, USA',
                 'description': 'Technology company specializing in internet services and products',
-                'domain': 'google.com',
-                'founded_year': 1998,
-                'employee_count': '150,000+'
+                'domain': 'google.com'
             },
             'microsoft': {
                 'company_name': 'Microsoft Corporation',
                 'industry': 'Technology',
                 'location': 'Redmond, Washington, USA',
                 'description': 'Technology company developing software and hardware',
-                'domain': 'microsoft.com',
-                'founded_year': 1975,
-                'employee_count': '180,000+'
+                'domain': 'microsoft.com'
             },
             'apple': {
                 'company_name': 'Apple Inc.',
                 'industry': 'Technology',
                 'location': 'Cupertino, California, USA',
                 'description': 'Technology company designing consumer electronics and software',
-                'domain': 'apple.com',
-                'founded_year': 1976,
-                'employee_count': '154,000+'
+                'domain': 'apple.com'
             },
             'amazon': {
                 'company_name': 'Amazon.com Inc.',
                 'industry': 'E-commerce',
                 'location': 'Seattle, Washington, USA',
                 'description': 'E-commerce and cloud computing company',
-                'domain': 'amazon.com', 'founded_year': 1994, 'employee_count': '1,300,000+'
+                'domain': 'amazon.com'
             },
             'facebook': {
                 'company_name': 'Meta Platforms Inc.',
                 'industry': 'Social Media',
                 'location': 'Menlo Park, California, USA',
                 'description': 'Social media and technology company',
-                'domain': 'meta.com', 'founded_year': 2004, 'employee_count': '85,000+'
+                'domain': 'meta.com'
             },
             'securden': {
                 'company_name': 'Securden',
                 'industry': 'Cybersecurity',
-                'location': 'Chennai, Tamil Nadu, India',
+                'location': 'Unknown',
                 'description': 'Cybersecurity company specializing in privileged access management',
-                'domain': 'securden.com', 'founded_year': 2018, 'employee_count': '50-100'
-            },
-            
-            
-            'mcafee': {
-                'company_name': 'McAfee Corp',
-                'industry': 'Cybersecurity',
-                'location': 'Santa Clara, California, USA',
-                'description': 'Global cybersecurity company providing protection against viruses and malware',
-                'domain': 'mcafee.com', 'founded_year': 1987, 'employee_count': '7,000+'
+                'domain': 'securden.com'
             }
         }
         
@@ -805,17 +638,6 @@ class CompanyVerifier:
                     'domain': result.get('domain'),
                     'description': result.get('description'),
                     'industry': result.get('industry'),
-                    'location': result.get('location'),
-                    'founded_year': result.get('founded_year'),
-                    'employee_count': result.get('employee_count')
-                })
-                # Local database is reliable
-                high_confidence_sources += 1
-                best_info.update({
-                    'company_name': result.get('company_name', company_name),
-                    'domain': result.get('domain'),
-                    'description': result.get('description'),
-                    'industry': result.get('industry'),
                     'location': result.get('location')
                 })
                 
@@ -840,8 +662,7 @@ class CompanyVerifier:
                     'about_text': result.get('about_text'),
                     'email': result.get('email'),
                     'phone': result.get('phone'),
-                    'address': result.get('address'),
-                    'founded_year': result.get('founded_year')
+                    'address': result.get('address')
                 }
                 
                 # Update best info with website data

@@ -54,37 +54,6 @@
             </div>
         </div>
 
-        <!-- Featured Companies Section -->
-        <div class="featured-section">
-            <h3>🏢 Featured Real Companies</h3>
-            <div class="featured-companies">
-                <div class="company-card" onclick="verifyFeaturedCompany('Google')">
-                    <div class="company-logo">🔍</div>
-                    <div class="company-info">
-                        <h4>Google LLC</h4>
-                        <p>Technology company specializing in internet services and products</p>
-                        <span class="company-tag">Technology</span>
-                    </div>
-                </div>
-                <div class="company-card" onclick="verifyFeaturedCompany('Microsoft')">
-                    <div class="company-logo">💻</div>
-                    <div class="company-info">
-                        <h4>Microsoft Corporation</h4>
-                        <p>Technology company developing software and hardware</p>
-                        <span class="company-tag">Software</span>
-                    </div>
-                </div>
-                <div class="company-card" onclick="verifyFeaturedCompany('McAfee')">
-                    <div class="company-logo">🛡️</div>
-                    <div class="company-info">
-                        <h4>McAfee Corp</h4>
-                        <p>Global cybersecurity company providing protection against viruses and malware</p>
-                        <span class="company-tag">Cybersecurity</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Results Section -->
         <div id="results" class="results-section" style="display: none;">
             <!-- URL Results -->
@@ -110,61 +79,19 @@
 
             <!-- Company Results -->
             <div id="company-results" class="result-card" style="display: none;">
-                <div class="company-layout">
-                    <!-- Left Side - Company Info -->
-                    <div class="company-left">
-                        <div class="company-header">
-                            <div class="company-avatar" id="companyAvatar">🏢</div>
-                            <div class="company-title">
-                                <h2 id="companyName">Company Name</h2>
-                                <p id="companyTagline">Company description</p>
-                            </div>
-                        </div>
-                        
-                        <div class="status-badge" id="companyStatusBadge">
-                            <span id="companyStatusText">VERIFIED</span>
-                        </div>
-                        
-                        <div id="companyRealityBadge" class="reality-badge" style="display: none;">
-                            <span id="realityStatusText"></span>
-                        </div>
-                        
-                        <div class="company-quick-info">
-                            <div class="quick-info-item">
-                                <span class="info-icon">🏭</span>
-                                <div>
-                                    <small>Industry</small>
-                                    <strong id="quickIndustry">Technology</strong>
-                                </div>
-                            </div>
-                            <div class="quick-info-item">
-                                <span class="info-icon">📍</span>
-                                <div>
-                                    <small>Location</small>
-                                    <strong id="quickLocation">Unknown</strong>
-                                </div>
-                            </div>
-                            <div class="quick-info-item">
-                                <span class="info-icon">🌐</span>
-                                <div>
-                                    <small>Website</small>
-                                    <strong id="quickWebsite">example.com</strong>
-                                </div>
-                            </div>
-                        </div>
+                <div class="status-badge" id="companyStatusBadge">
+                    <span id="companyStatusText">VERIFIED</span>
+                </div>
+                
+                <div class="result-details">
+                    <h3>Company Verification Results</h3>
+                    <div id="companyRealityBadge" class="reality-badge" style="display: none;">
+                        <span id="realityStatusText"></span>
                     </div>
-                    
-                    <!-- Right Side - Detailed Information -->
-                    <div class="company-right">
-                        <div class="result-details">
-                            <h3>Detailed Information</h3>
-                            <div id="companyDetails"></div>
-                            
-                            <div id="verificationSummary" class="verification-summary" style="display: none;">
-                                <h4>Verification Summary</h4>
-                                <div id="summaryDetails"></div>
-                            </div>
-                        </div>
+                    <div id="companyDetails"></div>
+                    <div id="verificationSummary" class="verification-summary" style="display: none;">
+                        <h4>Verification Summary</h4>
+                        <div id="summaryDetails"></div>
                     </div>
                 </div>
             </div>
@@ -290,9 +217,6 @@
             showElement('loading');
             
             try {
-                console.log('Verifying company:', companyName); // Debug log
-                console.log('Request body:', JSON.stringify({ company_name: companyName })); // Debug log
-                
                 // Make API request
                 const response = await fetch('/verify-company', {
                     method: 'POST',
@@ -302,31 +226,20 @@
                     body: JSON.stringify({ company_name: companyName })
                 });
                 
-                console.log('Response status:', response.status); // Debug log
-                console.log('Response headers:', response.headers); // Debug log
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Error response:', errorText);
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
                 const data = await response.json();
-                console.log('Response data:', data); // Debug log
                 
                 // Hide loading
                 hideElement('loading');
                 
-                if (data && !data.error) {
+                if (response.ok) {
                     displayCompanyResults(data);
                 } else {
-                    showError(data.error || 'Invalid response from server');
+                    showError(data.error || 'An error occurred');
                 }
                 
             } catch (error) {
-                console.error('Full error details:', error); // Debug log
                 hideElement('loading');
-                showError(`Network error: ${error.message}. Please try again.`);
+                showError('Network error. Please try again.');
             }
         }
         
@@ -389,70 +302,71 @@
                 realityBadge.style.display = 'block';
             }
             
-            // Update left side company info
-            document.getElementById('companyName').textContent = data.company_name || 'Unknown Company';
-            document.getElementById('companyTagline').textContent = data.description || 'Company information not available';
-            document.getElementById('quickIndustry').textContent = data.industry || 'Unknown';
-            document.getElementById('quickLocation').textContent = data.location || 'Unknown';
-            document.getElementById('quickWebsite').textContent = data.domain || data.url || 'Unknown';
-            
-            // Set company avatar based on industry
-            const avatar = document.getElementById('companyAvatar');
-            if (data.industry) {
-                const industryIcons = {
-                    'Technology': '💻',
-                    'Cybersecurity': '🔐',
-                    'Finance': '💰',
-                    'Healthcare': '🏥',
-                    'E-commerce': '🛒',
-                    'Software': '⚙️'
-                };
-                avatar.textContent = industryIcons[data.industry] || '🏢';
-            }
-            
-            // Update company details on the right
+            // Update company details
             const detailsDiv = document.getElementById('companyDetails');
             detailsDiv.innerHTML = '';
             
             if (data.verified && data.is_real) {
-                // Show only essential details
-                const essentialDetails = [];
+                const details = [
+                    { label: 'Company Name', value: data.company_name },
+                    { label: 'Industry', value: data.industry || 'Not available' },
+                    { label: 'Location', value: data.location || 'Not available' },
+                    { label: 'Description', value: data.description || 'Not available' },
+                    { label: 'Founded Year', value: data.founded_year || 'Not available' },
+                    { label: 'Employee Count', value: data.employee_count || 'Not available' },
+                    { label: 'Domain', value: data.domain || 'Not available' },
+                    { label: 'Verification Confidence', value: data.confidence || 'Unknown' }
+                ];
                 
-                if (data.founded_year) {
-                    essentialDetails.push({ label: 'Founded Year', value: data.founded_year });
+                // Add website-specific details if available
+                if (data.url) {
+                    details.push({ label: 'Website URL', value: data.url });
                 }
-                
-                if (data.employee_count) {
-                    essentialDetails.push({ label: 'Employee Count', value: data.employee_count });
-                }
-                
-                if (data.verification_confidence || data.confidence) {
-                    essentialDetails.push({ label: 'Verification Confidence', value: data.verification_confidence || data.confidence });
-                }
-                
-                // Add website-specific details only if available
-                if (data.url && data.url !== data.domain) {
-                    essentialDetails.push({ label: 'Website URL', value: data.url });
-                }
-                
                 if (data.website_title) {
-                    essentialDetails.push({ label: 'Website Title', value: data.website_title });
+                    details.push({ label: 'Website Title', value: data.website_title });
                 }
-                
+                if (data.about_text) {
+                    details.push({ label: 'About', value: data.about_text.substring(0, 200) + (data.about_text.length > 200 ? '...' : '') });
+                }
                 if (data.email) {
-                    essentialDetails.push({ label: 'Email', value: data.email });
+                    details.push({ label: 'Email', value: data.email });
                 }
-                
                 if (data.phone) {
-                    essentialDetails.push({ label: 'Phone', value: data.phone });
+                    details.push({ label: 'Phone', value: data.phone });
+                }
+                if (data.address) {
+                    details.push({ label: 'Address', value: data.address });
+                }
+                if (data.website_accessible !== undefined) {
+                    details.push({ label: 'Website Status', value: data.website_accessible ? 'Accessible' : 'Not Accessible' });
+                }
+                if (data.https_enabled !== undefined) {
+                    details.push({ label: 'HTTPS Enabled', value: data.https_enabled ? 'Yes' : 'No' });
                 }
                 
-                essentialDetails.forEach(detail => {
+                details.forEach(detail => {
                     const div = document.createElement('div');
                     div.className = 'detail-item';
                     div.innerHTML = `<strong>${detail.label}:</strong> ${detail.value}`;
                     detailsDiv.appendChild(div);
                 });
+                
+                // Add social links if available
+                if (data.social_links && Object.keys(data.social_links).length > 0) {
+                    const socialDiv = document.createElement('div');
+                    socialDiv.className = 'detail-item';
+                    socialDiv.innerHTML = '<strong>Social Links:</strong>';
+                    const linksList = document.createElement('ul');
+                    
+                    Object.entries(data.social_links).forEach(([platform, url]) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a href="${url}" target="_blank">${platform}</a>`;
+                        linksList.appendChild(li);
+                    });
+                    
+                    socialDiv.appendChild(linksList);
+                    detailsDiv.appendChild(socialDiv);
+                }
                 
                 // Show verification summary
                 if (data.verification_summary || data.sources_checked) {
@@ -460,7 +374,6 @@
                     const summaryDetails = document.getElementById('summaryDetails');
                     summaryDetails.innerHTML = '';
                     
-                    // Show verification summary text
                     if (data.verification_summary) {
                         const summaryText = document.createElement('div');
                         summaryText.className = 'detail-item';
@@ -468,50 +381,54 @@
                         summaryDetails.appendChild(summaryText);
                     }
                     
-                    // Show sources checked
-                    if (data.sources && Array.isArray(data.sources)) {
+                    if (data.sources && data.sources.length > 0) {
                         const sourcesText = document.createElement('div');
                         sourcesText.className = 'detail-item';
                         sourcesText.innerHTML = `<strong>Sources Checked:</strong> ${data.sources.join(', ')}`;
                         summaryDetails.appendChild(sourcesText);
                     }
                     
-                    // Show number of sources checked
-                    if (data.sources_checked && typeof data.sources_checked === 'number') {
-                        const countText = document.createElement('div');
-                        countText.className = 'detail-item';
-                        countText.innerHTML = `<strong>Total Sources Checked:</strong> ${data.sources_checked}`;
-                        summaryDetails.appendChild(countText);
+                    summaryDiv.style.display = 'block';
+                }
+                
+            } else {
+                // Show error/fake company information
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'detail-item error-detail';
+                errorDiv.innerHTML = `<strong>Status:</strong> ${data.error || 'Company could not be verified'}`;
+                detailsDiv.appendChild(errorDiv);
+                
+                if (data.company_name) {
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'detail-item';
+                    nameDiv.innerHTML = `<strong>Searched For:</strong> ${data.company_name}`;
+                    detailsDiv.appendChild(nameDiv);
+                }
+                
+                // Show verification summary for failed verification
+                if (data.sources_checked !== undefined) {
+                    const summaryDiv = document.getElementById('verificationSummary');
+                    const summaryDetails = document.getElementById('summaryDetails');
+                    summaryDetails.innerHTML = '';
+                    
+                    const sourcesText = document.createElement('div');
+                    sourcesText.className = 'detail-item';
+                    sourcesText.innerHTML = `<strong>Sources Checked:</strong> ${data.sources_checked} verification sources`;
+                    summaryDetails.appendChild(sourcesText);
+                    
+                    if (data.verification_summary) {
+                        const summaryText = document.createElement('div');
+                        summaryText.className = 'detail-item';
+                        summaryText.innerHTML = `<strong>Summary:</strong> ${data.verification_summary}`;
+                        summaryDetails.appendChild(summaryText);
                     }
                     
                     summaryDiv.style.display = 'block';
                 }
-            } else {
-                // Show error details for fake/unknown companies
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'detail-item error-detail';
-                errorDiv.innerHTML = `<strong>Verification Failed:</strong> ${data.error || 'Company could not be verified'}`;
-                detailsDiv.appendChild(errorDiv);
             }
             
+            // Show results
             showElement('results');
-        }
-        
-        // Function to verify featured companies
-        function verifyFeaturedCompany(companyName) {
-            // Switch to company tab
-            document.getElementById('url-section').style.display = 'none';
-            document.getElementById('company-section').style.display = 'block';
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // Add active class to company tab
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            
-            // Set the company name and verify
-            document.getElementById('companyInput').value = companyName;
-            verifyCompany();
         }
         
         function showError(message) {
