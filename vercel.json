@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/simple.py",
-      "use": "@vercel/python"
+      "src": "api/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/simple.py"
+      "dest": "api/index.js"
     }
   ]
 }
