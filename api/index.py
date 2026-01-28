@@ -1,16 +1,10 @@
-import os
-import sys
 from flask import Flask, request, jsonify, render_template
-
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from utils.url_checker import URLChecker
 from utils.company_verifier import CompanyVerifier
 
 app = Flask(__name__, 
-           template_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates'),
-           static_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static'))
+           template_folder='../templates',
+           static_folder='../static')
 
 # Initialize checkers
 url_checker = URLChecker()
